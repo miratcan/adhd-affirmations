@@ -14,10 +14,9 @@
       overflow: hidden;
       position: relative;
     }
-
     #nowPlaying {
       position: absolute;
-      top: 60%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 2;
@@ -28,35 +27,28 @@
       opacity: 0;
       transition: opacity 1.5s ease, transform 1.5s ease;
     }
-
-    #nowPlaying.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    #nowPlaying.hide {
-      opacity: 0;
-      transform: translateY(-50%, -100px);
-    }
-
+    #nowPlaying.show { opacity: 1; }
+    #nowPlaying.hide { opacity: 0; }
     .breath-circle {
       position: absolute;
-      top: 40%;
+      top: 50%;
       left: 50%;
-      width: 10vw;
+      width: 1vw;
       aspect-ratio: 1;
-      background: radial-gradient(circle at 30% 30%,#0000 4%,57%,#000 80%) #bd1d1d;
+      background: radial-gradient(circle at 70% 70%,#00000043 4%,57%,#00000043 80%) #FFF;
       border-radius: 50%;
-      transform: translate(-50%, -50%) scale(1);
       opacity: 1;
-      transition: transform 0.4167s ease-in-out, box-shadow 0.4167s ease-in-out;
+      transition: all 0.4167s ease-in-out;
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 0 40px #000000;
+      transform: translate(-50%, -50%) scale(1);
     }
-  
+    .breath-circle.shallow {
+      transform: translate(-50%, -50%) scale(100);
+      background: radial-gradient(circle at 70% 70%,#00000043 4%,57%,#00000043 80%) #00000000;
+    }
     .hidden {
       display: none;
     }
@@ -71,7 +63,7 @@
     // DOM Element Constants
     const BREATH_CIRCLE = document.getElementById('breathCircle');
     const NOW_PLAYING_DIV = document.getElementById('nowPlaying');
-  
+
     // Affirmations
     const AFFIRMATIONS = [
       { file: "audio/1.wav", title: "Everything I need comes to me with ease" },
@@ -105,7 +97,7 @@
     const updateNowPlaying = async (text) => {
       NOW_PLAYING_DIV.classList.remove('show');
       NOW_PLAYING_DIV.classList.add('hide');
-      await sleep(600);
+      await sleep(2000);
       NOW_PLAYING_DIV.textContent = text;
       NOW_PLAYING_DIV.classList.remove('hide');
       NOW_PLAYING_DIV.classList.add('show');
@@ -152,13 +144,7 @@
       const elapsed = now - startTime;
       const beatDuration = 60 / BPM;
       const beatIndex = Math.floor(elapsed / beatDuration);
-
-      BREATH_CIRCLE.style.transform = beatIndex % 2 === 0
-        ? 'translate(-50%, -50%) scale(1)'
-        : 'translate(-50%, -50%) scale(1.4)';
-      BREATH_CIRCLE.style.boxShadow = beatIndex % 2 === 0
-        ? '0 0 40px #000000'
-        : '0 0 0 #000000';
+      BREATH_CIRCLE.classList.toggle('shallow', beatIndex % 2 === 0);
     };
 
     const startPlayback = async () => {
