@@ -29,34 +29,45 @@
     }
     #nowPlaying.show { opacity: 1; }
     #nowPlaying.hide { opacity: 0; }
-    .breath-circle {
+    #breathCircle {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 1vw;
+      width: 10vw;
       aspect-ratio: 1;
-      background: radial-gradient(circle at 70% 70%,#00000043 4%,57%,#00000043 80%) #FFF;
+      /* background: radial-gradient(circle at 70% 70%,#00000000 4%,57%,#00000000 80%) #FFF; */
+      background-color: #eee;
+      background-image: url('./visual/play.svg');
+      background-size: 100%;
+      background-position: center;
+      background-repeat: no-repeat;
       border-radius: 50%;
-      opacity: 1;
       transition: all 0.8334s ease-in-out;
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      transform: translate(-50%, -50%) scale(1);
+      transform: translate(-50%, -50%);
     }
-    .breath-circle.shallow {
-      transform: translate(-50%, -50%) scale(100);
-      background: radial-gradient(circle at 70% 70%,#00000043 4%,57%,#00000043 80%) #00000000;
+    #breathCircle.playing {
+      background-image: none;
+      width: 1vw;
+    }
+    #breathCircle.shallow {
+      background: transparent;
+      width: 50vw;
     }
     .hidden {
       display: none;
     }
   </style>
+  <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="miratcan" data-description="Support me on Buy me a coffee!" data-message="" data-color="#5F7FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 </head>
 <body>
 
-  <div class="breath-circle" id="breathCircle" onClick="startPlayback()"></div>
+  <div id="breathCircle" class="stopped" onClick="startPlayback()"></div>
+
+
   <div id="nowPlaying"></div>
 
   <script>
@@ -121,9 +132,7 @@
         } catch (e) {
           console.warn("Audio file could not be played:", e);
         }
-
         await new Promise(resolve => audio.onended = resolve);
-
         if (!playing) break;
         await sleep(DELAY_SECONDS * 1000);
       }
@@ -151,6 +160,7 @@
       if (!playing) {
         playing = true;
         currentIndex = 0;
+        BREATH_CIRCLE.classList.remove('stopped');
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const response = await fetch('audio/background.mp3');
@@ -165,6 +175,7 @@
 
         startTime = audioContext.currentTime;
         animationInterval = setInterval(updateBreathCircle, 30);
+        BREATH_CIRCLE.classList.add('playing');
 
         playSequence();
       }
@@ -175,6 +186,8 @@
       clearInterval(animationInterval);
 
       BREATH_CIRCLE.style.transform = 'translate(-50%, -50%) scale(1)';
+      BREATH_CIRCLE.classList.remove('shallow');
+      BREATH_CIRCLE.classList.add('stopped');
 
       if (musicSource) {
         musicSource.stop();
