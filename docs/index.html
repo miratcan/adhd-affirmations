@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Shamanic Affirmations</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      padding: 0;
+      margin: 0;
+      background: radial-gradient(circle at center, #4B1b1b 0%, #000000 100%);
+      color: #eee;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    h2, label, select, input, button {
+      z-index: 2;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #ffa726;
+    }
+
+    label {
+      margin: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    select, input[type="number"] {
+      padding: 0.3rem 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #666;
+      border-radius: 5px;
+      background: #222;
+      color: #eee;
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      margin: 1rem 0.5rem;
+      font-size: 1rem;
+      background-color: #4e342e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #3e2723;
+    }
+
+    #nowPlaying {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fff3e0;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 1.5s ease, transform 1.5s ease;
+    }
+
+    #nowPlaying.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    #nowPlaying.hide {
+      opacity: 0;
+      transform: translateY(-50%, -100px);
+    }
+
+    .breath-circle {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      width: 10vw;
+      aspect-ratio: 1;
+  	  background: radial-gradient(circle at 40% 30%,#0000 4%,57%,#000 90%) #FE4365;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      z-index: 1;
+      opacity: 1;
+      transition: transform 0.4167s ease-in-out;
+      pointer-events: none;
+      box-shadow: 0 0 100px #FFAABB;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="controls"><button onClick="startPlayback()">Başlat</button></div>
+  <div class="breath-circle" id="breathCircle"></div>
+  <div id="nowPlaying"></div>
+
+  <script>
+    const audioFiles = [
+      "audio/Everything I need comes to me with ease.wav",
+      "audio/Everything is in its right place.wav",
+      "audio/Everything is now organized.wav",
+      "audio/My abundance, resources, and inspiration have returned.wav",
+      "audio/My awareness is sharp.wav",
+      "audio/My belongings have found their place.wav",
+      "audio/My energy flows.wav",
+      "audio/My mind is clear.wav",
+      "audio/My strength is steady.wav",
+      "audio/So am I....wav",
+      "audio/There is balance, ease, and flow in my life.wav"
+    ];
+
+    let playing = false;
+    let currentIndex = 0;
+    let audioContext;
+    let musicSource;
+    let startTime;
+    let bpm = 110;
+    let animationInterval;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function playSequence() {
+      const delaySeconds = 5;
+      const mode = 'sequential'
+      const nowPlayingDiv = document.getElementById('nowPlaying');
+
+      while (playing) {
+        let file;
+        if (mode === 'sequential') {
+          file = audioFiles[currentIndex % audioFiles.length];
+          currentIndex++;
+        } else {
+          const randIndex = Math.floor(Math.random() * audioFiles.length);
+          file = audioFiles[randIndex];
+        }
+
+        const baseName = file.split('/').pop().replace(/\.[^/.]+$/, "");
+        const formattedName = baseName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+        nowPlayingDiv.classList.remove('show');
+        nowPlayingDiv.classList.add('hide');
+        await sleep(600);
+        nowPlayingDiv.textContent = `${formattedName}...`;
+        nowPlayingDiv.classList.remove('hide');
+        nowPlayingDiv.classList.add('show');
+
+        const audio = new Audio(file);
+        await audio.play();
+
+        await new Promise(resolve => {
+          audio.onended = resolve;
+        });
+
+        if (!playing) break;
+        await sleep(delaySeconds * 1000);
+      }
+
+      document.getElementById('nowPlaying').textContent = "";
+      document.getElementById('nowPlaying').classList.remove('show');
+      document.getElementById('controls').classList.remove('hidden');
+      clearInterval(animationInterval);
+
+      if (musicSource) {
+        musicSource.stop();
+        musicSource.disconnect();
+      }
+    }
+
+    function updateBreathCircle() {
+      const now = audioContext.currentTime;
+      const elapsed = now - startTime;
+      const beatDuration = 60 / bpm; // saniye
+      const beatIndex = Math.floor(elapsed / beatDuration);
+
+      const circle = document.getElementById('breathCircle');
+      if (beatIndex % 2 === 0) {
+        circle.style.transform = 'translate(-50%, -50%) scale(1)'
+      } else {
+        circle.style.transform = 'translate(-50%, -50%) scale(1.4)'
+      }
+    }
+
+    async function startPlayback() {
+      if (!playing) {
+        playing = true;
+        currentIndex = 0;
+        document.getElementById('controls').classList.add('hidden');
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const response = await fetch('audio/background.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        musicSource = audioContext.createBufferSource();
+        musicSource.buffer = audioBuffer;
+        musicSource.loop = true;
+        musicSource.connect(audioContext.destination);
+        musicSource.start();
+
+        startTime = audioContext.currentTime;
+        animationInterval = setInterval(updateBreathCircle, 100);
+
+        playSequence();
+      }
+    }
+
+    function stopPlayback() {
+      playing = false;
+      clearInterval(animationInterval);
+
+      const circle = document.getElementById('breathCircle');
+      circle.style.transform = 'translate(-50%, -50%) scale(1)';
+
+      if (musicSource) {
+        musicSource.stop();
+        musicSource.disconnect();
+      }
+    }
+
+  </script>
+</body>
+</html>
