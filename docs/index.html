@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Shamanic Affirmations</title>
+  <title>ADHD Affirmations</title>
   <style>
     body {
       font-family: 'Georgia', serif;
@@ -13,45 +13,6 @@
       height: 100vh;
       overflow: hidden;
       position: relative;
-    }
-
-    h2, label, select, input, button {
-      z-index: 2;
-    }
-
-    h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      color: #ffa726;
-    }
-
-    label {
-      margin: 0.5rem;
-      font-size: 1.1rem;
-    }
-
-    select, input[type="number"] {
-      padding: 0.3rem 0.5rem;
-      font-size: 1rem;
-      border: 1px solid #666;
-      border-radius: 5px;
-      background: #222;
-      color: #eee;
-    }
-
-    button {
-      padding: 0.6rem 1.2rem;
-      margin: 1rem 0.5rem;
-      font-size: 1rem;
-      background-color: #4e342e;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #3e2723;
     }
 
     #nowPlaying {
@@ -84,16 +45,18 @@
       left: 50%;
       width: 10vw;
       aspect-ratio: 1;
-  	  background: radial-gradient(circle at 40% 30%,#0000 4%,57%,#000 90%) #FE4365;
+      background: radial-gradient(circle at 30% 30%,#0000 4%,57%,#000 80%) #bd1d1d;
       border-radius: 50%;
       transform: translate(-50%, -50%) scale(1);
-      z-index: 1;
       opacity: 1;
-      transition: transform 0.4167s ease-in-out;
-      pointer-events: none;
-      box-shadow: 0 0 100px #FFAABB;
+      transition: transform 0.4167s ease-in-out, box-shadow 0.4167s ease-in-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 0 40px #000000;
     }
-
+  
     .hidden {
       display: none;
     }
@@ -101,103 +64,107 @@
 </head>
 <body>
 
-  <div id="controls"><button onClick="startPlayback()">Başlat</button></div>
-  <div class="breath-circle" id="breathCircle"></div>
+  <div class="breath-circle" id="breathCircle" onClick="startPlayback()"></div>
   <div id="nowPlaying"></div>
 
   <script>
-    const audioFiles = [
-      "audio/Everything I need comes to me with ease.wav",
-      "audio/Everything is in its right place.wav",
-      "audio/Everything is now organized.wav",
-      "audio/My abundance, resources, and inspiration have returned.wav",
-      "audio/My awareness is sharp.wav",
-      "audio/My belongings have found their place.wav",
-      "audio/My energy flows.wav",
-      "audio/My mind is clear.wav",
-      "audio/My strength is steady.wav",
-      "audio/So am I....wav",
-      "audio/There is balance, ease, and flow in my life.wav"
+    // DOM Element Constants
+    const BREATH_CIRCLE = document.getElementById('breathCircle');
+    const NOW_PLAYING_DIV = document.getElementById('nowPlaying');
+  
+    // Affirmations
+    const AFFIRMATIONS = [
+      { file: "audio/1.wav", title: "Everything I need comes to me with ease" },
+      { file: "audio/2.wav", title: "Everything is in its right place" },
+      { file: "audio/3.wav", title: "Everything is now organized" },
+      { file: "audio/4.wav", title: "My abundance, resources, and inspiration have returned" },
+      { file: "audio/5.wav", title: "My awareness is sharp" },
+      { file: "audio/6.wav", title: "My belongings have found their place" },
+      { file: "audio/7.wav", title: "My energy flows" },
+      { file: "audio/8.wav", title: "My mind is clear" },
+      { file: "audio/9.wav", title: "My strength is steady" },
+      { file: "audio/10.wav", title: "So am I..." },
+      { file: "audio/11.wav", title: "There is balance, ease, and flow in my life" }
     ];
 
+    // Configuration Constants
+    const BPM = 110;
+    const AFFIRMATIONS_START_AFTER_BEAT = 32; // Affirmations start after 8 beats
+    const DELAY_SECONDS = 5; // Delay between affirmations (in seconds)
+
+    // State Variables
     let playing = false;
     let currentIndex = 0;
     let audioContext;
     let musicSource;
     let startTime;
-    let bpm = 110;
     let animationInterval;
 
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-    async function playSequence() {
-      const delaySeconds = 5;
-      const mode = 'sequential'
-      const nowPlayingDiv = document.getElementById('nowPlaying');
+    const updateNowPlaying = async (text) => {
+      NOW_PLAYING_DIV.classList.remove('show');
+      NOW_PLAYING_DIV.classList.add('hide');
+      await sleep(600);
+      NOW_PLAYING_DIV.textContent = text;
+      NOW_PLAYING_DIV.classList.remove('hide');
+      NOW_PLAYING_DIV.classList.add('show');
+    };
+
+    const playSequence = async () => {
+      // Wait for the specified number of beats before starting affirmations
+      const beatDuration = 60 / BPM;
+      const initialDelayMs = AFFIRMATIONS_START_AFTER_BEAT * beatDuration * 1000;
+      await sleep(initialDelayMs);
 
       while (playing) {
-        let file;
-        if (mode === 'sequential') {
-          file = audioFiles[currentIndex % audioFiles.length];
-          currentIndex++;
-        } else {
-          const randIndex = Math.floor(Math.random() * audioFiles.length);
-          file = audioFiles[randIndex];
+        const affirmation = AFFIRMATIONS[currentIndex % AFFIRMATIONS.length];
+        currentIndex++;
+
+        await updateNowPlaying(affirmation.title + "...");
+
+        const audio = new Audio(affirmation.file);
+        try {
+          await audio.play();
+        } catch (e) {
+          console.warn("Audio file could not be played:", e);
         }
 
-        const baseName = file.split('/').pop().replace(/\.[^/.]+$/, "");
-        const formattedName = baseName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-
-        nowPlayingDiv.classList.remove('show');
-        nowPlayingDiv.classList.add('hide');
-        await sleep(600);
-        nowPlayingDiv.textContent = `${formattedName}...`;
-        nowPlayingDiv.classList.remove('hide');
-        nowPlayingDiv.classList.add('show');
-
-        const audio = new Audio(file);
-        await audio.play();
-
-        await new Promise(resolve => {
-          audio.onended = resolve;
-        });
+        await new Promise(resolve => audio.onended = resolve);
 
         if (!playing) break;
-        await sleep(delaySeconds * 1000);
+        await sleep(DELAY_SECONDS * 1000);
       }
 
-      document.getElementById('nowPlaying').textContent = "";
-      document.getElementById('nowPlaying').classList.remove('show');
-      document.getElementById('controls').classList.remove('hidden');
+      NOW_PLAYING_DIV.textContent = "";
+      NOW_PLAYING_DIV.classList.remove('show');
+      // document.getElementById('controls').classList.remove('hidden'); // Removed as 'controls' not present in HTML
       clearInterval(animationInterval);
 
       if (musicSource) {
         musicSource.stop();
         musicSource.disconnect();
       }
-    }
+    };
 
-    function updateBreathCircle() {
+    const updateBreathCircle = () => {
       const now = audioContext.currentTime;
       const elapsed = now - startTime;
-      const beatDuration = 60 / bpm; // saniye
+      const beatDuration = 60 / BPM;
       const beatIndex = Math.floor(elapsed / beatDuration);
 
-      const circle = document.getElementById('breathCircle');
-      if (beatIndex % 2 === 0) {
-        circle.style.transform = 'translate(-50%, -50%) scale(1)'
-      } else {
-        circle.style.transform = 'translate(-50%, -50%) scale(1.4)'
-      }
-    }
+      BREATH_CIRCLE.style.transform = beatIndex % 2 === 0
+        ? 'translate(-50%, -50%) scale(1)'
+        : 'translate(-50%, -50%) scale(1.4)';
+      BREATH_CIRCLE.style.boxShadow = beatIndex % 2 === 0
+        ? '0 0 40px #000000'
+        : '0 0 0 #000000';
+    };
 
-    async function startPlayback() {
+    const startPlayback = async () => {
       if (!playing) {
         playing = true;
         currentIndex = 0;
-        document.getElementById('controls').classList.add('hidden');
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const response = await fetch('audio/background.mp3');
@@ -211,25 +178,23 @@
         musicSource.start();
 
         startTime = audioContext.currentTime;
-        animationInterval = setInterval(updateBreathCircle, 100);
+        animationInterval = setInterval(updateBreathCircle, 30);
 
         playSequence();
       }
-    }
+    };
 
-    function stopPlayback() {
+    const stopPlayback = () => {
       playing = false;
       clearInterval(animationInterval);
 
-      const circle = document.getElementById('breathCircle');
-      circle.style.transform = 'translate(-50%, -50%) scale(1)';
+      BREATH_CIRCLE.style.transform = 'translate(-50%, -50%) scale(1)';
 
       if (musicSource) {
         musicSource.stop();
         musicSource.disconnect();
       }
-    }
-
+    };
   </script>
 </body>
 </html>
